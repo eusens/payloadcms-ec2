@@ -21,6 +21,7 @@ import { Users } from '@/collections/Users'
 import { Footer } from '@/globals/Footer'
 import { Header } from '@/globals/Header'
 import { plugins } from './plugins'
+import { resendAdapter } from '@payloadcms/email-resend';
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -90,4 +91,9 @@ export default buildConfig({
   // if you want to resize images, crop, set focal point, etc.
   // make sure to install it and pass it to the config.
   // sharp,
+   email: resendAdapter({
+    apiKey: process.env.RESEND_API_KEY!,
+    defaultFromAddress: process.env.RESEND_FROM_ADDRESS!,
+    defaultFromName: process.env.RESEND_FROM_NAME!,
+  }),
 })

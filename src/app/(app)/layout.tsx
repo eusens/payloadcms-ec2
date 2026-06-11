@@ -11,6 +11,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import React from 'react'
 import './globals.css'
+import Navbar from '@/components/Navbar'
 
 /* const { SITE_NAME, TWITTER_CREATOR, TWITTER_SITE } = process.env
 const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
@@ -56,7 +57,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <AdminBar />
           <LivePreviewListener />
 
-          <Header />
+          {/* <Header /> */}
+          <Navbar />
           <main>{children}</main>
           <Footer />
         </Providers>
