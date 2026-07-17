@@ -168,7 +168,7 @@ const Homepage = async () => {
                   </h3>
                   {product.priceInUSD && (
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      ${product.priceInUSD.toFixed(2)}
+                      ${(product.priceInUSD / 100).toFixed(2)}
                     </p>
                   )}
                 </div>
