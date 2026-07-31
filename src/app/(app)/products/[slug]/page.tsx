@@ -1,3 +1,4 @@
+// src/app/(app)/products/[slug]/page.tsx
 import type { Media, Product } from '@/payload-types'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
@@ -13,6 +14,37 @@ import React, { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon } from 'lucide-react'
 import { Metadata } from 'next'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+
+// ✅ 添加静态生成：预先生成所有产品页面
+export async function generateStaticParams() {
+  const payload = await getPayload({ config: configPromise })
+
+  const products = await payload.find({
+    collection: 'products',
+    draft: false,
+    limit: 2000, // 根据你的产品数量调整
+    overrideAccess: false,
+    pagination: false,
+    select: {
+      slug: true,
+    },
+    where: {
+      _status: { equals: 'published' },
+    },
+  })
+
+  return products.docs.map((product) => ({
+    slug: product.slug,
+  }))
+}
 
 type Args = {
   params: Promise<{
@@ -92,6 +124,15 @@ export default async function ProductPage({ params }: Args) {
     }, price)
   }
 
+  // 获取分类信息（使用 id）
+  const categoryName = product.categories?.[0] 
+    ? (typeof product.categories[0] === 'object' ? product.categories[0].title : product.categories[0])
+    : null
+
+  const categoryId = product.categories?.[0]
+    ? (typeof product.categories[0] === 'object' ? product.categories[0].id : null)
+    : null
+
   const productJsonLd = {
     name: product.title,
     '@context': 'https://schema.org',
@@ -118,12 +159,36 @@ export default async function ProductPage({ params }: Args) {
         type="application/ld+json"
       />
       <div className="container pt-8 pb-8">
+        {/* 面包屑导航 */}
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/shop">All products</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            {categoryName && categoryId ? (
+              <>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={`/shop?category=${categoryId}`}>
+                    {categoryName}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+              </>
+            ) : null}
+            <BreadcrumbItem>
+              <BreadcrumbPage>{product.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <Button asChild variant="ghost" className="mb-4">
           <Link href="/shop">
             <ChevronLeftIcon />
             All products
           </Link>
         </Button>
+
         <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
           <div className="h-full w-full basis-full lg:basis-1/2">
             <Suspense
