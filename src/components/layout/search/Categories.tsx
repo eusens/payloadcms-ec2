@@ -25,7 +25,7 @@ async function CategoryList() {
     select: {
       categories: true,
     },
-    limit: 1000,
+    pagination: false,
   })
 
   // 3. 统计每个分类的产品数量
