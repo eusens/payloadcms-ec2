@@ -23,14 +23,17 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 
-// ✅ 添加静态生成：预先生成所有产品页面
+// ✅ 新增：ISR，每小时后台重新验证
+export const revalidate = 3600
+
+//  预生成最多 10,000 个已发布产品页面
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
 
   const products = await payload.find({
     collection: 'products',
     draft: false,
-    limit: 2000, // 根据你的产品数量调整
+    limit: 10000,
     overrideAccess: false,
     pagination: false,
     select: {
@@ -54,7 +57,8 @@ type Args = {
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  // ✅ 改动：metadata 里默认不走 draft
+  const product = await queryProductBySlug({ slug, draft: false })
 
   if (!product) return notFound()
 
@@ -93,7 +97,12 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Args) {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+
+  // ✅ 改动：draftMode 只在页面层调用，不传进查询函数以外的地方
+  const { isEnabled: draft } = await draftMode()
+
+  // ✅ 改动：把 draft 作为参数传进去
+  const product = await queryProductBySlug({ slug, draft })
 
   if (!product) return notFound()
 
@@ -124,13 +133,16 @@ export default async function ProductPage({ params }: Args) {
     }, price)
   }
 
-  // 获取分类信息（使用 id）
-  const categoryName = product.categories?.[0] 
-    ? (typeof product.categories[0] === 'object' ? product.categories[0].title : product.categories[0])
+  const categoryName = product.categories?.[0]
+    ? typeof product.categories[0] === 'object'
+      ? product.categories[0].title
+      : product.categories[0]
     : null
 
   const categoryId = product.categories?.[0]
-    ? (typeof product.categories[0] === 'object' ? product.categories[0].id : null)
+    ? typeof product.categories[0] === 'object'
+      ? product.categories[0].id
+      : null
     : null
 
   const productJsonLd = {
@@ -159,7 +171,6 @@ export default async function ProductPage({ params }: Args) {
         type="application/ld+json"
       />
       <div className="container pt-8 pb-8">
-        {/* 面包屑导航 */}
         <Breadcrumb className="mb-4">
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -247,9 +258,14 @@ function RelatedProducts({ products }: { products: Product[] }) {
   )
 }
 
-const queryProductBySlug = async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
-
+// ✅ 改动：draft 变成参数，不再在函数内部调用 draftMode()
+const queryProductBySlug = async ({
+  slug,
+  draft = false,
+}: {
+  slug: string
+  draft?: boolean
+}) => {
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({
