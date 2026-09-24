@@ -149,13 +149,24 @@ export default async function ProductPage({ params }: Args) {
     name: product.title,
     '@context': 'https://schema.org',
     '@type': 'Product',
-    description: product.description,
+    description:
+    typeof product.description === 'string'
+      ? product.description
+      : product.meta?.description || '',
     image: metaImage?.url,
+    sku: product.slug,
+    brand: categoryName
+    ? {
+        '@type': 'Brand',
+        name: categoryName,
+      }
+    : undefined,
     offers: {
-      '@type': 'AggregateOffer',
+      '@type': 'Offer',
       availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      price: price,
+      price: typeof price === 'number' ? price / 100 : price,
       priceCurrency: 'usd',
+      url: `https://panasonicservomotor.com/products/${product.slug}`,
     },
   }
 
