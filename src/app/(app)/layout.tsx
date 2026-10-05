@@ -12,6 +12,7 @@ import { GeistMono } from 'geist/font/mono'
 import React from 'react'
 import './globals.css'
 import Navbar from '@/components/Navbar'
+import Script from 'next/script'
 
 /* const { SITE_NAME, TWITTER_CREATOR, TWITTER_SITE } = process.env
 const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL
@@ -53,6 +54,19 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-500Q1TV2TJ"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-500Q1TV2TJ');
+          `}
+        </Script>
         <Providers>
           <AdminBar />
           <LivePreviewListener />
