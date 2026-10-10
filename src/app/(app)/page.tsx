@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 import { ArrowUpRight } from 'lucide-react'
 
+export const revalidate = 3600
+
 const Homepage = async () => {
   const payload = await getPayload({ config: configPromise })
 
