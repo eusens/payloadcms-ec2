@@ -84,6 +84,14 @@ export async function Footer() {
           </div>
         </div>
       </div>
+      {/* 免责声明 (新加的部分) */}
+      <div className="border-t border-neutral-200 py-6 dark:border-neutral-700">
+        <div className="container mx-auto">
+          <p className="text-center text-xs text-neutral-400 dark:text-neutral-500">
+            We are an independent supplier of industrial automation parts. All trademarks belong to their respective owners.
+          </p>
+        </div>
+      </div>
       
       {/* 版权信息 */}
       <div className="border-t border-neutral-200 py-6 text-sm dark:border-neutral-700">

@@ -59,7 +59,7 @@ export default function PrivacyPolicyPage() {
 
       <hr className="my-8" />
       <p className="text-xs text-gray-400">
-        This Privacy Policy was created for Newsino Energy Co Ltd.
+        This Privacy Policy was created for Eusens control Co Ltd.
       </p>
     </div>
   )
