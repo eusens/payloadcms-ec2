@@ -26,7 +26,7 @@ import {
 // ✅ 新增：ISR，每小时后台重新验证
 export const revalidate = 3600
 
-//  预生成最多 10,000 个已发布产品页面
+// 预生成最多 10,000 个已发布产品页面
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
 
@@ -142,7 +142,7 @@ export default async function ProductPage({ params }: Args) {
   const categoryId = product.categories?.[0]
     ? typeof product.categories[0] === 'object'
       ? product.categories[0].id
-      : null
+      : product.categories[0]
     : null
 
   const productJsonLd = {
@@ -150,17 +150,17 @@ export default async function ProductPage({ params }: Args) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     description:
-    typeof product.description === 'string'
-      ? product.description
-      : product.meta?.description || '',
+      typeof product.description === 'string'
+        ? product.description
+        : product.meta?.description || '',
     image: metaImage?.url,
     sku: product.slug,
     brand: categoryName
-    ? {
-        '@type': 'Brand',
-        name: categoryName,
-      }
-    : undefined,
+      ? {
+          '@type': 'Brand',
+          name: categoryName,
+        }
+      : undefined,
     offers: {
       '@type': 'Offer',
       availability: hasStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
@@ -170,8 +170,33 @@ export default async function ProductPage({ params }: Args) {
     },
   }
 
-  const relatedProducts =
+  // ==========================================
+  // ✅ 新增：智能推荐逻辑
+  // ==========================================
+  let relatedProducts =
     product.relatedProducts?.filter((relatedProduct) => typeof relatedProduct === 'object') ?? []
+
+  // 如果没填手动推荐，且有分类，则自动去数据库抓取同分类的 4 个产品
+  if (relatedProducts.length === 0 && categoryId) {
+    const payload = await getPayload({ config: configPromise })
+
+    const autoRelated = await payload.find({
+      collection: 'products',
+      draft: false,
+      limit: 4, // 自动推荐 4 个
+      depth: 1, // 深度 1 足够获取封面和标题，加快渲染速度
+      where: {
+        and: [
+          { _status: { equals: 'published' } },
+          { categories: { contains: categoryId } }, // 必须是同一个分类
+          { id: { not_equals: product.id } }, // 排除当前产品自己
+        ],
+      },
+      sort: '-createdAt', // 按最新上架的排
+    })
+
+    relatedProducts = autoRelated.docs
+  }
 
   return (
     <React.Fragment>
@@ -230,23 +255,32 @@ export default async function ProductPage({ params }: Args) {
 
       {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>}
 
-      {relatedProducts.length ? (
+      {/* ✅ 优化：这里加入动态标题，区分手动还是自动推荐 */}
+      {relatedProducts.length > 0 && (
         <div className="container">
-          <RelatedProducts products={relatedProducts as Product[]} />
+          <RelatedProducts
+            products={relatedProducts as Product[]}
+            title={product.relatedProducts?.length ? 'Related Products' : 'You May Also Like'}
+          />
         </div>
-      ) : (
-        <></>
       )}
     </React.Fragment>
   )
 }
 
-function RelatedProducts({ products }: { products: Product[] }) {
+// ✅ 组件增加 title 参数
+function RelatedProducts({
+  products,
+  title = 'Related Products',
+}: {
+  products: Product[]
+  title?: string
+}) {
   if (!products.length) return null
 
   return (
     <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
+      <h2 className="mb-4 text-2xl font-bold">{title}</h2>
       <ul className="flex w-full gap-4 overflow-x-auto pt-1">
         {products.map((product) => (
           <li
